@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package da;
+
+option go_package = "./;modelpb"; 
+
+service ModelOprService {
+// get modelInfo via key (maybe device)
+  rpc getModelInfo(ModelInfoReq) returns (ModelInfo) {}
+
+// save Model to Staging Mode
+  rpc saveStagingVersion (stream UploadModelObjReq) returns (UploadModelObjResp) {}
+
+// commit Staging Model to Version model, version+1
+  rpc commitStagingVersion (ModelInfoReq) returns (UploadModelObjResp) {}
+  
+// save Model to DB, version+1
+  rpc saveModel(stream UploadModelObjReq) returns (UploadModelObjResp) {}
+  
+// get Latest Model version
+  rpc getLatestModel (ModelInfoReq) returns (ModelObj) {}
+}
+
+message ModelInfoReq {
+  string Name = 1;
+}
+
+message ModelInfo {
+  string CurVer = 1;
+  string StagingVer = 2;
+}
+
+message UploadModelObjReq {
+  string Name = 1;
+  string Staging = 2;
+  bytes Content = 3;
+}
+
+enum UploadStatusCode {
+  Unknown = 0;
+  Ok = 1;
+  Failed = 2;
+}
+
+message UploadModelObjResp {
+  string Name = 1;
+  string Version = 2;
+  UploadStatusCode Code = 3;
+}
+
+message ModelObj {
+  bytes chunk = 1;
+}
