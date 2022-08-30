@@ -5,49 +5,49 @@ package da;
 option go_package = "./;modelpb"; 
 
 service ModelOprService {
-// get modelInfo via key (maybe device)
-  rpc getModelInfo(ModelInfoReq) returns (ModelInfo) {}
-
 // save Model to Staging Mode
-  rpc saveStagingVersion (stream UploadModelObjReq) returns (UploadModelObjResp) {}
+  // rpc uploadStagingVer (stream FileUploadRequest) returns (FileUploadResponse) {}
 
 // commit Staging Model to Version model, version+1
-  rpc commitStagingVersion (ModelInfoReq) returns (UploadModelObjResp) {}
+  // rpc commitStagingVer (DownloadRequest) returns (CommonResponse) {}
   
 // save Model to DB, version+1
-  rpc saveModel(stream UploadModelObjReq) returns (UploadModelObjResp) {}
+  rpc uploadStandardVer(stream FileUploadRequest) returns (FileUploadResponse) {}
   
 // get Latest Model version
-  rpc getLatestModel (ModelInfoReq) returns (ModelObj) {}
+  // rpc downloadLatestVer (DownloadRequest) returns (stream DownloadResponse) {}
+
+// // sync Latest Model automaticly (will check version inside )
+//   rpc syncLatestVers ()
 }
 
-message ModelInfoReq {
-  string Name = 1;
+// ----------------- Upload --------------------
+enum Status {
+  PENDING = 0;
+  IN_PROGRESS = 1;
+  SUCCESS = 2;
+  FAILED = 3;
 }
 
-message ModelInfo {
-  string CurVer = 1;
-  string StagingVer = 2;
+message FileUploadRequest {
+  string Filename = 1;
+  bytes Content = 2;
 }
 
-message UploadModelObjReq {
-  string Name = 1;
-  string Staging = 2;
-  bytes Content = 3;
+message FileUploadResponse {
+  string Filename = 1;
+  string Message = 2;
+  Status Status = 3;
+}
+// ----------------- Download --------------------
+message DownloadRequest {
+  string Filename = 1;
 }
 
-enum UploadStatusCode {
-  Unknown = 0;
-  Ok = 1;
-  Failed = 2;
+message DownloadResponse {
+  bytes Content = 1;
 }
-
-message UploadModelObjResp {
-  string Name = 1;
-  string Version = 2;
-  UploadStatusCode Code = 3;
-}
-
-message ModelObj {
-  bytes chunk = 1;
+// ----------------- Common ---------------------
+message CommonResponse {
+  Status Status = 1;
 }

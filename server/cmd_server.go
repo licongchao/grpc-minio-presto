@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/urfave/cli"
 
-	modelpb "da/modelopr/pb/inventory"
+	modelpb "da/pb/inventory"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -16,9 +19,9 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type server struct {
-	modelpb.UnimplementedModelOprServiceServer
-}
+// type server struct {
+// 	modelpb.UnimplementedModelOprServiceServer
+// }
 
 type Server interface {
 	Listen() (err error)
@@ -95,7 +98,7 @@ func (s *ServerGRPC) Listen() (err error) {
 	}
 
 	s.server = grpc.NewServer(grpcOpts...)
-	modelpb.RegisterModelOprServiceServer(s.server, &server{})
+	modelpb.RegisterModelOprServiceServer(s.server, s)
 
 	err = s.server.Serve(listener)
 	if err != nil {
@@ -114,6 +117,86 @@ func (s *ServerGRPC) Close() {
 		s.server.Stop()
 	}
 
+	return
+}
+
+func writeToFp(fp *os.File, data []byte) error {
+	w := 0
+	n := len(data)
+	for {
+		nw, err := fp.Write(data[w:])
+		if err != nil {
+			return err
+		}
+		w += nw
+		if nw >= n {
+			return nil
+		}
+	}
+
+}
+func (s *ServerGRPC) uploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
+	firstChunk := true
+
+	var fp *os.File
+	var fileData *modelpb.FileUploadRequest
+	var filename string
+
+	for {
+		fileData, err = stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			err = errors.Wrapf(err, "failed unexpectedly while reading chunks from stream")
+			return
+		}
+
+		if firstChunk {
+			if fileData.Filename != "" { //create file
+				fp, err = os.Create(path.Join(s.destDir, filepath.Base(fileData.Filename)))
+
+				if err != nil {
+					s.logger.Error().Msg("Unable to create file  :" + fileData.Filename)
+					stream.SendAndClose(&modelpb.FileUploadResponse{
+						Message: "Unable to create file :" + fileData.Filename,
+						Status:  modelpb.Status_FAILED,
+					})
+					return
+				}
+				defer fp.Close()
+			} else {
+				s.logger.Error().Msg("FileName not provided in first chunk  :" + fileData.Filename)
+				stream.SendAndClose(&modelpb.FileUploadResponse{
+					Message: "FileName not provided in first chunk:" + fileData.Filename,
+					Status:  modelpb.Status_FAILED,
+				})
+				return
+			}
+			filename = fileData.Filename
+			firstChunk = false
+		}
+
+		err = writeToFp(fp, fileData.Content)
+		if err != nil {
+			s.logger.Error().Msg("Unable to write chunk of filename :" + fileData.Filename + " " + err.Error())
+			stream.SendAndClose(&modelpb.FileUploadResponse{
+				Message: "Unable to write chunk of filename :" + fileData.Filename,
+				Status:  modelpb.Status_FAILED,
+			})
+			return
+		}
+	}
+	err = stream.SendAndClose(&modelpb.FileUploadResponse{
+		Message: "Upload received with success",
+		Status:  modelpb.Status_SUCCESS,
+	})
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to send status code")
+		return
+	}
+	fmt.Println("Successfully received and stored the file :" + filename + " in " + s.destDir)
 	return
 }
 
@@ -163,5 +246,4 @@ func StartServerCommand() cli.Command {
 			return nil
 		},
 	}
-
 }

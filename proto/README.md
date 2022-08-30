@@ -4,7 +4,7 @@
     go get google.golang.org/grpc
     go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
  -->
-$ protoc --go_out=./go_gen --go-grpc_out=./go_gen ./*.proto
+$ protoc --go_out=. --go-grpc_out=. ./*.proto
 
 # Python
 

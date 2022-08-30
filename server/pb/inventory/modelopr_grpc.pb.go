@@ -22,16 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ModelOprServiceClient interface {
-	// get modelInfo via key (maybe device)
-	GetModelInfo(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*ModelInfo, error)
-	// save Model to Staging Mode
-	SaveStagingVersion(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_SaveStagingVersionClient, error)
-	// commit Staging Model to Version model, version+1
-	CommitStagingVersion(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*UploadModelObjResp, error)
 	// save Model to DB, version+1
-	SaveModel(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_SaveModelClient, error)
-	// get Latest Model version
-	GetLatestModel(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*ModelObj, error)
+	UploadStandardVer(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_UploadStandardVerClient, error)
 }
 
 type modelOprServiceClient struct {
@@ -42,115 +34,46 @@ func NewModelOprServiceClient(cc grpc.ClientConnInterface) ModelOprServiceClient
 	return &modelOprServiceClient{cc}
 }
 
-func (c *modelOprServiceClient) GetModelInfo(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*ModelInfo, error) {
-	out := new(ModelInfo)
-	err := c.cc.Invoke(ctx, "/da.ModelOprService/getModelInfo", in, out, opts...)
+func (c *modelOprServiceClient) UploadStandardVer(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_UploadStandardVerClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ModelOprService_ServiceDesc.Streams[0], "/da.ModelOprService/uploadStandardVer", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
-}
-
-func (c *modelOprServiceClient) SaveStagingVersion(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_SaveStagingVersionClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ModelOprService_ServiceDesc.Streams[0], "/da.ModelOprService/saveStagingVersion", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &modelOprServiceSaveStagingVersionClient{stream}
+	x := &modelOprServiceUploadStandardVerClient{stream}
 	return x, nil
 }
 
-type ModelOprService_SaveStagingVersionClient interface {
-	Send(*UploadModelObjReq) error
-	CloseAndRecv() (*UploadModelObjResp, error)
+type ModelOprService_UploadStandardVerClient interface {
+	Send(*FileUploadRequest) error
+	CloseAndRecv() (*FileUploadResponse, error)
 	grpc.ClientStream
 }
 
-type modelOprServiceSaveStagingVersionClient struct {
+type modelOprServiceUploadStandardVerClient struct {
 	grpc.ClientStream
 }
 
-func (x *modelOprServiceSaveStagingVersionClient) Send(m *UploadModelObjReq) error {
+func (x *modelOprServiceUploadStandardVerClient) Send(m *FileUploadRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *modelOprServiceSaveStagingVersionClient) CloseAndRecv() (*UploadModelObjResp, error) {
+func (x *modelOprServiceUploadStandardVerClient) CloseAndRecv() (*FileUploadResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(UploadModelObjResp)
+	m := new(FileUploadResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
-}
-
-func (c *modelOprServiceClient) CommitStagingVersion(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*UploadModelObjResp, error) {
-	out := new(UploadModelObjResp)
-	err := c.cc.Invoke(ctx, "/da.ModelOprService/commitStagingVersion", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelOprServiceClient) SaveModel(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_SaveModelClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ModelOprService_ServiceDesc.Streams[1], "/da.ModelOprService/saveModel", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &modelOprServiceSaveModelClient{stream}
-	return x, nil
-}
-
-type ModelOprService_SaveModelClient interface {
-	Send(*UploadModelObjReq) error
-	CloseAndRecv() (*UploadModelObjResp, error)
-	grpc.ClientStream
-}
-
-type modelOprServiceSaveModelClient struct {
-	grpc.ClientStream
-}
-
-func (x *modelOprServiceSaveModelClient) Send(m *UploadModelObjReq) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *modelOprServiceSaveModelClient) CloseAndRecv() (*UploadModelObjResp, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(UploadModelObjResp)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *modelOprServiceClient) GetLatestModel(ctx context.Context, in *ModelInfoReq, opts ...grpc.CallOption) (*ModelObj, error) {
-	out := new(ModelObj)
-	err := c.cc.Invoke(ctx, "/da.ModelOprService/getLatestModel", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 // ModelOprServiceServer is the server API for ModelOprService service.
 // All implementations must embed UnimplementedModelOprServiceServer
 // for forward compatibility
 type ModelOprServiceServer interface {
-	// get modelInfo via key (maybe device)
-	GetModelInfo(context.Context, *ModelInfoReq) (*ModelInfo, error)
-	// save Model to Staging Mode
-	SaveStagingVersion(ModelOprService_SaveStagingVersionServer) error
-	// commit Staging Model to Version model, version+1
-	CommitStagingVersion(context.Context, *ModelInfoReq) (*UploadModelObjResp, error)
 	// save Model to DB, version+1
-	SaveModel(ModelOprService_SaveModelServer) error
-	// get Latest Model version
-	GetLatestModel(context.Context, *ModelInfoReq) (*ModelObj, error)
+	UploadStandardVer(ModelOprService_UploadStandardVerServer) error
 	mustEmbedUnimplementedModelOprServiceServer()
 }
 
@@ -158,20 +81,8 @@ type ModelOprServiceServer interface {
 type UnimplementedModelOprServiceServer struct {
 }
 
-func (UnimplementedModelOprServiceServer) GetModelInfo(context.Context, *ModelInfoReq) (*ModelInfo, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetModelInfo not implemented")
-}
-func (UnimplementedModelOprServiceServer) SaveStagingVersion(ModelOprService_SaveStagingVersionServer) error {
-	return status.Errorf(codes.Unimplemented, "method SaveStagingVersion not implemented")
-}
-func (UnimplementedModelOprServiceServer) CommitStagingVersion(context.Context, *ModelInfoReq) (*UploadModelObjResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitStagingVersion not implemented")
-}
-func (UnimplementedModelOprServiceServer) SaveModel(ModelOprService_SaveModelServer) error {
-	return status.Errorf(codes.Unimplemented, "method SaveModel not implemented")
-}
-func (UnimplementedModelOprServiceServer) GetLatestModel(context.Context, *ModelInfoReq) (*ModelObj, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLatestModel not implemented")
+func (UnimplementedModelOprServiceServer) UploadStandardVer(ModelOprService_UploadStandardVerServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadStandardVer not implemented")
 }
 func (UnimplementedModelOprServiceServer) mustEmbedUnimplementedModelOprServiceServer() {}
 
@@ -186,110 +97,30 @@ func RegisterModelOprServiceServer(s grpc.ServiceRegistrar, srv ModelOprServiceS
 	s.RegisterService(&ModelOprService_ServiceDesc, srv)
 }
 
-func _ModelOprService_GetModelInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ModelInfoReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelOprServiceServer).GetModelInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/da.ModelOprService/getModelInfo",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelOprServiceServer).GetModelInfo(ctx, req.(*ModelInfoReq))
-	}
-	return interceptor(ctx, in, info, handler)
+func _ModelOprService_UploadStandardVer_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ModelOprServiceServer).UploadStandardVer(&modelOprServiceUploadStandardVerServer{stream})
 }
 
-func _ModelOprService_SaveStagingVersion_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ModelOprServiceServer).SaveStagingVersion(&modelOprServiceSaveStagingVersionServer{stream})
-}
-
-type ModelOprService_SaveStagingVersionServer interface {
-	SendAndClose(*UploadModelObjResp) error
-	Recv() (*UploadModelObjReq, error)
+type ModelOprService_UploadStandardVerServer interface {
+	SendAndClose(*FileUploadResponse) error
+	Recv() (*FileUploadRequest, error)
 	grpc.ServerStream
 }
 
-type modelOprServiceSaveStagingVersionServer struct {
+type modelOprServiceUploadStandardVerServer struct {
 	grpc.ServerStream
 }
 
-func (x *modelOprServiceSaveStagingVersionServer) SendAndClose(m *UploadModelObjResp) error {
+func (x *modelOprServiceUploadStandardVerServer) SendAndClose(m *FileUploadResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *modelOprServiceSaveStagingVersionServer) Recv() (*UploadModelObjReq, error) {
-	m := new(UploadModelObjReq)
+func (x *modelOprServiceUploadStandardVerServer) Recv() (*FileUploadRequest, error) {
+	m := new(FileUploadRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
-}
-
-func _ModelOprService_CommitStagingVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ModelInfoReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelOprServiceServer).CommitStagingVersion(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/da.ModelOprService/commitStagingVersion",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelOprServiceServer).CommitStagingVersion(ctx, req.(*ModelInfoReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelOprService_SaveModel_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ModelOprServiceServer).SaveModel(&modelOprServiceSaveModelServer{stream})
-}
-
-type ModelOprService_SaveModelServer interface {
-	SendAndClose(*UploadModelObjResp) error
-	Recv() (*UploadModelObjReq, error)
-	grpc.ServerStream
-}
-
-type modelOprServiceSaveModelServer struct {
-	grpc.ServerStream
-}
-
-func (x *modelOprServiceSaveModelServer) SendAndClose(m *UploadModelObjResp) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *modelOprServiceSaveModelServer) Recv() (*UploadModelObjReq, error) {
-	m := new(UploadModelObjReq)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _ModelOprService_GetLatestModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ModelInfoReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelOprServiceServer).GetLatestModel(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/da.ModelOprService/getLatestModel",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelOprServiceServer).GetLatestModel(ctx, req.(*ModelInfoReq))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 // ModelOprService_ServiceDesc is the grpc.ServiceDesc for ModelOprService service.
@@ -298,29 +129,11 @@ func _ModelOprService_GetLatestModel_Handler(srv interface{}, ctx context.Contex
 var ModelOprService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "da.ModelOprService",
 	HandlerType: (*ModelOprServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "getModelInfo",
-			Handler:    _ModelOprService_GetModelInfo_Handler,
-		},
-		{
-			MethodName: "commitStagingVersion",
-			Handler:    _ModelOprService_CommitStagingVersion_Handler,
-		},
-		{
-			MethodName: "getLatestModel",
-			Handler:    _ModelOprService_GetLatestModel_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "saveStagingVersion",
-			Handler:       _ModelOprService_SaveStagingVersion_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "saveModel",
-			Handler:       _ModelOprService_SaveModel_Handler,
+			StreamName:    "uploadStandardVer",
+			Handler:       _ModelOprService_UploadStandardVer_Handler,
 			ClientStreams: true,
 		},
 	},
