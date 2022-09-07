@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -8,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/urfave/cli"
 
 	modelpb "da/pb/inventory"
@@ -19,7 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// type server struct {
+// type modelserver struct {
 // 	modelpb.UnimplementedModelOprServiceServer
 // }
 
@@ -35,6 +37,8 @@ type ServerGRPC struct {
 	certificate string
 	key         string
 	destDir     string
+
+	modelpb.UnimplementedModelOprServiceServer
 }
 
 type ServerGRPCConfig struct {
@@ -42,6 +46,107 @@ type ServerGRPCConfig struct {
 	Key         string
 	Address     string
 	DestDir     string
+}
+
+//writeToFp takes in a file pointer and byte array and writes the byte array into the file
+//returns error if pointer is nil or error in writing to file
+
+func (s *ServerGRPC) Close() {
+	if s.server != nil {
+		s.server.Stop()
+	}
+}
+
+// string Filename = 1;
+// string Latestver = 2;
+// string Stagingver = 3;
+func (s *ServerGRPC) GetFilesVer(context.Context, *empty.Empty) (*modelpb.FileInfoResponse, error) {
+	fileInfo1 := &modelpb.FileInfo{
+		Filename:  "1.text",
+		Latestver: "123",
+	}
+	return &modelpb.FileInfoResponse{FileInfo: []*modelpb.FileInfo{fileInfo1}}, nil
+}
+
+func (s *ServerGRPC) UploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
+	firstChunk := true
+
+	var fp *os.File
+	var fileData *modelpb.FileUploadRequest
+	var filename string
+
+	for {
+		fileData, err = stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			err = errors.Wrapf(err, "failed unexpectedly while reading chunks from stream")
+			return
+		}
+
+		if firstChunk {
+			if fileData.Filename != "" { //create file
+				fp, err = os.Create(path.Join(s.destDir, filepath.Base(fileData.Filename)))
+
+				if err != nil {
+					s.logger.Error().Msg("Unable to create file  :" + fileData.Filename)
+					stream.SendAndClose(&modelpb.FileUploadResponse{
+						Message: "Unable to create file :" + fileData.Filename,
+						Status:  modelpb.Status_FAILED,
+					})
+					return
+				}
+				defer fp.Close()
+			} else {
+				s.logger.Error().Msg("FileName not provided in first chunk  :" + fileData.Filename)
+				stream.SendAndClose(&modelpb.FileUploadResponse{
+					Message: "FileName not provided in first chunk:" + fileData.Filename,
+					Status:  modelpb.Status_FAILED,
+				})
+				return
+			}
+			filename = fileData.Filename
+			firstChunk = false
+		}
+
+		err = writeToFp(fp, fileData.Content)
+		if err != nil {
+			s.logger.Error().Msg("Unable to write chunk of filename :" + fileData.Filename + " " + err.Error())
+			stream.SendAndClose(&modelpb.FileUploadResponse{
+				Message: "Unable to write chunk of filename :" + fileData.Filename,
+				Status:  modelpb.Status_FAILED,
+			})
+			return
+		}
+	}
+	err = stream.SendAndClose(&modelpb.FileUploadResponse{
+		Message: "Upload received with success",
+		Status:  modelpb.Status_SUCCESS,
+	})
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to send status code")
+		return
+	}
+	fmt.Println("Successfully received and stored the file :" + filename + " in " + s.destDir)
+	return
+}
+
+func writeToFp(fp *os.File, data []byte) error {
+	w := 0
+	n := len(data)
+	for {
+		nw, err := fp.Write(data[w:])
+		if err != nil {
+			return err
+		}
+		w += nw
+		if nw >= n {
+			return nil
+		}
+	}
+
 }
 
 func NewServerGRPC(cfg ServerGRPCConfig) (s ServerGRPC, err error) {
@@ -109,97 +214,6 @@ func (s *ServerGRPC) Listen() (err error) {
 	return
 }
 
-//writeToFp takes in a file pointer and byte array and writes the byte array into the file
-//returns error if pointer is nil or error in writing to file
-
-func (s *ServerGRPC) Close() {
-	if s.server != nil {
-		s.server.Stop()
-	}
-
-	return
-}
-
-func writeToFp(fp *os.File, data []byte) error {
-	w := 0
-	n := len(data)
-	for {
-		nw, err := fp.Write(data[w:])
-		if err != nil {
-			return err
-		}
-		w += nw
-		if nw >= n {
-			return nil
-		}
-	}
-
-}
-func (s *ServerGRPC) uploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
-	firstChunk := true
-
-	var fp *os.File
-	var fileData *modelpb.FileUploadRequest
-	var filename string
-
-	for {
-		fileData, err = stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			err = errors.Wrapf(err, "failed unexpectedly while reading chunks from stream")
-			return
-		}
-
-		if firstChunk {
-			if fileData.Filename != "" { //create file
-				fp, err = os.Create(path.Join(s.destDir, filepath.Base(fileData.Filename)))
-
-				if err != nil {
-					s.logger.Error().Msg("Unable to create file  :" + fileData.Filename)
-					stream.SendAndClose(&modelpb.FileUploadResponse{
-						Message: "Unable to create file :" + fileData.Filename,
-						Status:  modelpb.Status_FAILED,
-					})
-					return
-				}
-				defer fp.Close()
-			} else {
-				s.logger.Error().Msg("FileName not provided in first chunk  :" + fileData.Filename)
-				stream.SendAndClose(&modelpb.FileUploadResponse{
-					Message: "FileName not provided in first chunk:" + fileData.Filename,
-					Status:  modelpb.Status_FAILED,
-				})
-				return
-			}
-			filename = fileData.Filename
-			firstChunk = false
-		}
-
-		err = writeToFp(fp, fileData.Content)
-		if err != nil {
-			s.logger.Error().Msg("Unable to write chunk of filename :" + fileData.Filename + " " + err.Error())
-			stream.SendAndClose(&modelpb.FileUploadResponse{
-				Message: "Unable to write chunk of filename :" + fileData.Filename,
-				Status:  modelpb.Status_FAILED,
-			})
-			return
-		}
-	}
-	err = stream.SendAndClose(&modelpb.FileUploadResponse{
-		Message: "Upload received with success",
-		Status:  modelpb.Status_SUCCESS,
-	})
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to send status code")
-		return
-	}
-	fmt.Println("Successfully received and stored the file :" + filename + " in " + s.destDir)
-	return
-}
-
 func StartServerCommand() cli.Command {
 
 	return cli.Command{
@@ -246,4 +260,5 @@ func StartServerCommand() cli.Command {
 			return nil
 		},
 	}
+
 }

@@ -8,6 +8,7 @@ package modelpb
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -24,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ModelOprServiceClient interface {
 	// save Model to DB, version+1
 	UploadStandardVer(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_UploadStandardVerClient, error)
+	GetFilesVer(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoResponse, error)
 }
 
 type modelOprServiceClient struct {
@@ -68,12 +70,22 @@ func (x *modelOprServiceUploadStandardVerClient) CloseAndRecv() (*FileUploadResp
 	return m, nil
 }
 
+func (c *modelOprServiceClient) GetFilesVer(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoResponse, error) {
+	out := new(FileInfoResponse)
+	err := c.cc.Invoke(ctx, "/da.ModelOprService/getFilesVer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelOprServiceServer is the server API for ModelOprService service.
 // All implementations must embed UnimplementedModelOprServiceServer
 // for forward compatibility
 type ModelOprServiceServer interface {
 	// save Model to DB, version+1
 	UploadStandardVer(ModelOprService_UploadStandardVerServer) error
+	GetFilesVer(context.Context, *empty.Empty) (*FileInfoResponse, error)
 	mustEmbedUnimplementedModelOprServiceServer()
 }
 
@@ -83,6 +95,9 @@ type UnimplementedModelOprServiceServer struct {
 
 func (UnimplementedModelOprServiceServer) UploadStandardVer(ModelOprService_UploadStandardVerServer) error {
 	return status.Errorf(codes.Unimplemented, "method UploadStandardVer not implemented")
+}
+func (UnimplementedModelOprServiceServer) GetFilesVer(context.Context, *empty.Empty) (*FileInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFilesVer not implemented")
 }
 func (UnimplementedModelOprServiceServer) mustEmbedUnimplementedModelOprServiceServer() {}
 
@@ -123,13 +138,36 @@ func (x *modelOprServiceUploadStandardVerServer) Recv() (*FileUploadRequest, err
 	return m, nil
 }
 
+func _ModelOprService_GetFilesVer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelOprServiceServer).GetFilesVer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/da.ModelOprService/getFilesVer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelOprServiceServer).GetFilesVer(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelOprService_ServiceDesc is the grpc.ServiceDesc for ModelOprService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ModelOprService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "da.ModelOprService",
 	HandlerType: (*ModelOprServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "getFilesVer",
+			Handler:    _ModelOprService_GetFilesVer_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "uploadStandardVer",

@@ -9,9 +9,11 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const chunkSize = 64 * 1024
@@ -44,12 +46,12 @@ func NewUploader(ctx context.Context, client modelpb.ModelOprServiceClient, dir 
 }
 
 func UploadFiles(ctx context.Context, client modelpb.ModelOprServiceClient, filepathlist []string, dir string) error {
-
 	d := NewUploader(ctx, client, dir)
+	defer d.Stop()
+
 	var errorUploadbulk error
 
 	if dir != "" {
-
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
 			log.Fatal(err)
@@ -57,34 +59,24 @@ func UploadFiles(ctx context.Context, client modelpb.ModelOprServiceClient, file
 
 		go func() {
 			for _, file := range files {
-
 				if !file.IsDir() {
-
 					d.Do(dir + "/" + file.Name())
-
 				}
 			}
 		}()
-
 		for _, file := range files {
 			if !file.IsDir() {
 				select {
-
-				case <-d.DoneRequest:
-
-					//fmt.Println("sucessfully sent :" + req)
-
+				case req := <-d.DoneRequest:
+					fmt.Println("sucessfully sent :" + req)
 				case req := <-d.FailRequest:
-
 					fmt.Println("failed to  send " + req)
 					errorUploadbulk = errors.Wrapf(errorUploadbulk, " Failed to send %s", req)
-
 				}
 			}
 		}
-		fmt.Println("All done ")
+		fmt.Println("Dic All done ")
 	} else {
-
 		go func() {
 			for _, file := range filepathlist {
 				d.Do(file)
@@ -92,18 +84,16 @@ func UploadFiles(ctx context.Context, client modelpb.ModelOprServiceClient, file
 		}()
 
 		defer d.Stop()
-
 		for i := 0; i < len(filepathlist); i++ {
 			select {
-
-			case <-d.DoneRequest:
-			//	fmt.Println("sucessfully sent " + req)
+			case req := <-d.DoneRequest:
+				fmt.Println("sucessfully sent " + req)
 			case req := <-d.FailRequest:
 				fmt.Println("failed to  send " + req)
 				errorUploadbulk = errors.Wrapf(errorUploadbulk, " Failed to send %s", req)
 			}
 		}
-
+		fmt.Println("Files All done ")
 	}
 
 	return errorUploadbulk
@@ -204,19 +194,26 @@ func (d *uploader) worker(workerID int) {
 }
 
 func main() {
-	options := []grpc.DialOption{}
-
-	options = append(options, grpc.WithInsecure())
-
-	conn, err := grpc.Dial("localhost:5000", options...)
+	conn, err := grpc.Dial("localhost:5000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("cannot connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
+		return
 	}
 	defer conn.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go UploadFiles(context.Background(), modelpb.NewModelOprServiceClient(conn), []string{}, "/home/licongchao/TTemp/2021-09-23")
-	wg.Wait()
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
+	c := modelpb.NewModelOprServiceClient(conn)
+	// resp, err := c.GetFilesVer(ctx, &empty.Empty{})
+	// if err != nil {
+	// 	log.Fatalf("could not greet: %v", err)
+	// }
+	// fmt.Println(resp)
+	err1 := UploadFiles(ctx, c, []string{}, "/home/licongchao/TTemp/2021-09-23")
+	if err1 != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	// ==========================================================
 }
