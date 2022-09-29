@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/urfave/cli"
@@ -18,7 +19,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // type modelserver struct {
@@ -175,13 +175,13 @@ func NewServerGRPC(cfg ServerGRPCConfig) (s ServerGRPC, err error) {
 }
 
 func (s *ServerGRPC) Listen() (err error) {
-	var (
-		listener  net.Listener
-		grpcOpts  = []grpc.ServerOption{}
-		grpcCreds credentials.TransportCredentials
-	)
+	// var (
+	// 	listener  net.Listener
+	// 	grpcOpts  = []grpc.ServerOption{}
+	// 	grpcCreds credentials.TransportCredentials
+	// )
 
-	listener, err = net.Listen("tcp", s.Address)
+	// listener, err = net.Listen("tcp", s.Address)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to listen on  %d",
@@ -189,29 +189,41 @@ func (s *ServerGRPC) Listen() (err error) {
 		return
 	}
 
-	if s.certificate != "" && s.key != "" {
-		grpcCreds, err = credentials.NewServerTLSFromFile(
-			s.certificate, s.key)
-		if err != nil {
-			err = errors.Wrapf(err,
-				"failed to create tls grpc server using cert %s and key %s",
-				s.certificate, s.key)
-			return
-		}
+	// if s.certificate != "" && s.key != "" {
+	// 	grpcCreds, err = credentials.NewServerTLSFromFile(
+	// 		s.certificate, s.key)
+	// 	if err != nil {
+	// 		err = errors.Wrapf(err,
+	// 			"failed to create tls grpc server using cert %s and key %s",
+	// 			s.certificate, s.key)
+	// 		return
+	// 	}
 
-		grpcOpts = append(grpcOpts, grpc.Creds(grpcCreds))
-	}
+	// 	grpcOpts = append(grpcOpts, grpc.Creds(grpcCreds))
+	// }
 
-	s.server = grpc.NewServer(grpcOpts...)
+	mux := GetHTTPServeMux()
+
+	// s.server = grpc.NewServer(grpcOpts...)
+	s.server = grpc.NewServer()
 	modelpb.RegisterModelOprServiceServer(s.server, s)
 
-	err = s.server.Serve(listener)
-	if err != nil {
-		err = errors.Wrapf(err, "errored listening for grpc connections")
-		return
-	}
+	// err = s.server.Serve(listener)
+	// if err != nil {
+	// 	err = errors.Wrapf(err, "errored listening for grpc connections")
+	// 	return
+	// }
 
-	return
+	http.ListenAndServe(":10000",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+				s.server.ServeHTTP(w, r)
+			} else {
+				mux.ServeHTTP(w, r)
+			}
+		}),
+	)
+	return nil
 }
 
 func StartServerCommand() cli.Command {
@@ -255,6 +267,9 @@ func StartServerCommand() cli.Command {
 			}
 			server := &grpcServer
 			err = server.Listen()
+			if err != nil {
+				return err
+			}
 
 			defer server.Close()
 			return nil

@@ -1,10 +1,11 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
 package da;
 
 option go_package = "./;modelpb"; 
 
-service ModelOprService {
+service ObjectStorageSvc {
 // save Model to Staging Mode
   // rpc uploadStagingVer (stream FileUploadRequest) returns (FileUploadResponse) {}
 
@@ -19,6 +20,8 @@ service ModelOprService {
 
 // // sync Latest Model automaticly (will check version inside )
 //   rpc syncLatestVers ()
+  
+  rpc getFilesVer(google.protobuf.Empty) returns (FileInfoResponse) {}
 }
 
 // ----------------- Upload --------------------
@@ -50,4 +53,13 @@ message DownloadResponse {
 // ----------------- Common ---------------------
 message CommonResponse {
   Status Status = 1;
+}
+// ------------------Info ------------------------
+message FileInfo {
+  string Filename = 1;
+  string Latestver = 2;
+  string Stagingver = 3;
+}
+message FileInfoResponse {
+  repeated FileInfo FileInfo = 1;
 }
