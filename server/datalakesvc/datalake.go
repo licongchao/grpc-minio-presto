@@ -1,7 +1,7 @@
 package datalakesvc
 
 import (
-	"io"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -35,25 +35,30 @@ type DatalakeGRPCSvc struct {
 	high level API
 	(1)上传文件
 	(2)自动创建表结构
+		表结构定义分为如下两种
+		-- map[string]interface {} / []interface {}
+		map类型需要传入完整的表结构定义
+			示例如下:
+			{
+			  	sepal_length DOUBLE,
+				sepal_width  DOUBLE,
+				petal_length DOUBLE,
+				petal_width  DOUBLE,
+				class        VARCHAR
+			}
+		[] 类型将默认采用String实现
 	(3)写入UUID.json
 	返回UUID给后续使用
 */
 func (s *DatalakeGRPCSvc) PrepareRawData(r *http.Request) (uuidStr string, err error) {
-	r.ParseMultipartForm(32 << 20)
-
-	file, handler, err := r.FormFile("file")
-
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	io.Copy()
+	uuidExchange, _ := ObjStorageSvc.UploadObject(r)
 	newUUID := uuid.New()
 
-	UUIDMetaInfo{"datalake/rawdata/" + handler.Filename, "", tableAlias}
+	keyName := newUUID.String() + ".json"
+	uuidJson, _ := json.Marshal(uuidExchange)
+	ObjStorageSvc.CreateObject(uuidJson, BucketName, keyName)
 
-	return
+	return newUUID.String(), nil
 }
 
 // low level API,直接调用SQL查询所需的数据
@@ -71,24 +76,22 @@ func (s *DatalakeGRPCSvc) PrepareRawData(r *http.Request) (uuidStr string, err e
 // 	return rec, nil
 // }
 
-func main() {
-	// f, err := os.Open("/home/licongchao/workspace/DataPreparation/presto-minio-docker/data/titanicWithCols.csv")
-	// if err != nil {
-	// 	return
-	// }
-	// csvReader := csv.NewReader(f)
-	// // for {
-	// // rec, err := csvReader.Read()
-	// // if err == io.EOF {
-	// // 	return
-	// // }
-	// // if err != nil {
-	// // 	log.Fatal(err)
-	// // }
-	// // // do something with read line
-	// // fmt.Printf("%+v\n", rec)
-	// // }
+// f, err := os.Open("/home/licongchao/workspace/DataPreparation/presto-minio-docker/data/titanicWithCols.csv")
+// if err != nil {
+// 	return
+// }
+// csvReader := csv.NewReader(f)
+// // for {
+// // rec, err := csvReader.Read()
+// // if err == io.EOF {
+// // 	return
+// // }
+// // if err != nil {
+// // 	log.Fatal(err)
+// // }
+// // // do something with read line
+// // fmt.Printf("%+v\n", rec)
+// // }
 
-	// cols, err := getCsvColumns(csvReader)
-	// fmt.Println(cols)
-}
+// cols, err := getCsvColumns(csvReader)
+// fmt.Println(cols)

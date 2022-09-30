@@ -13,6 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/urfave/cli"
 
+	"da/httpserver"
 	modelpb "da/pb/inventory"
 
 	"github.com/pkg/errors"
@@ -202,7 +203,7 @@ func (s *ServerGRPC) Listen() (err error) {
 	// 	grpcOpts = append(grpcOpts, grpc.Creds(grpcCreds))
 	// }
 
-	mux := GetHTTPServeMux()
+	mux := httpserver.GetHTTPServeMux()
 
 	// s.server = grpc.NewServer(grpcOpts...)
 	s.server = grpc.NewServer()
