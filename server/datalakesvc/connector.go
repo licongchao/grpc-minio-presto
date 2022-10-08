@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/go-sql-driver/mysql"
@@ -60,9 +61,11 @@ var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
 var nullTimeType = reflect.TypeOf(mysql.NullTime{})
 
 func InitConnection(url string) (DBConnectorSvc, error) {
-	db, err := sql.Open("presto", url)
+	db, err := sql.Open("trino", url)
 	if err != nil {
-		return DBConnectorSvc{nil}, fmt.Errorf("can't connect to presto error: %v", err)
+		newErr := fmt.Errorf("can't connect to presto error: %v", err)
+		log.Print(newErr)
+		return DBConnectorSvc{nil}, newErr
 	}
 	ConnSvc.conn = db
 	return ConnSvc, nil
@@ -74,8 +77,21 @@ func CloseRow(rows *sql.Rows) {
 	}
 }
 
-func (s *DBConnectorSvc) ExePrestoSqlQuery(sqlExe string) ([]byte, error) {
-	rows, _ := ConnSvc.conn.Query(sqlExe)
+// func (s *DBConnectorSvc) ExecPrestoSql(sqlExe string) error {
+// 	result, err := ConnSvc.conn.Exec(sqlExe)
+// 	if err != nil {
+// 		fmt.Print(err)
+// 		return err
+// 	}
+// 	fmt.Print(result)
+// 	return nil
+// }
+
+func (s *DBConnectorSvc) ExecPrestoSqlQuery(sqlExe string) ([]byte, error) {
+	rows, err := ConnSvc.conn.Query(sqlExe)
+	if err != nil {
+		fmt.Print(err)
+	}
 	defer CloseRow(rows)
 
 	if rows == nil {

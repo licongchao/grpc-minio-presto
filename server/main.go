@@ -2,9 +2,9 @@ package main
 
 import (
 	dlsvc "da/datalakesvc"
+	mylog "da/mylog"
 	"os"
 
-	_ "github.com/prestodb/presto-go-client/presto"
 	"github.com/urfave/cli"
 )
 
@@ -29,6 +29,7 @@ func main() {
 
 	dlsvc.ConnSvc, _ = dlsvc.InitConnection(dsn)
 	dlsvc.ObjStorageSvc, _ = dlsvc.ConnectStorageSvc(*S3config)
+	mylog.InitLogger()
 
 	// s3svc.ObjStorageSvc.ListObjectNames(&s3.ListObjectsInput{
 	// 	Bucket: aws.String("datalake"),

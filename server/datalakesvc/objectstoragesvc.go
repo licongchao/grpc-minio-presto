@@ -2,9 +2,11 @@ package datalakesvc
 
 import (
 	"bytes"
+	mylog "da/mylog"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"reflect"
@@ -127,6 +129,34 @@ func (s *ObjectStorageGRPCSvc) ListObjectNames(params *s3.ListObjectsInput) (Obj
 	return ObjectNames, nil
 }
 
+// Load JsonObject into UUID
+func (s *ObjectStorageGRPCSvc) getUUIDObjectAsJson(bucketName string, keyName string) (metaJson UUIDMetaInfo, err error) {
+	requestInput := &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(keyName),
+	}
+
+	result, err := s.s3Client.GetObject(requestInput)
+	if err != nil {
+		mylog.Info.Println(err)
+	}
+	defer result.Body.Close()
+
+	body, err := ioutil.ReadAll(result.Body)
+	if err != nil {
+		log.Print(err)
+	}
+
+	var metrics UUIDMetaInfo
+	err = json.Unmarshal([]byte(body), &metrics)
+	if err != nil {
+		fmt.Println("Error UUIDMetaInfo format")
+		return UUIDMetaInfo{}, err
+	}
+
+	return metrics, nil
+}
+
 func (s *ObjectStorageGRPCSvc) CreateObject(fileContent []byte, bucketName string, keyName string) (err error) {
 	s.s3Client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(fileContent),
@@ -177,21 +207,26 @@ func createSchemaColumns(schema string) (columns string) {
 	return strings.Join(column_list, ",")
 }
 
-func createSchemaSTMT(schema string, filename string) (schemaSTMT string) {
-	var stmt strings.Builder
+func createSchemaSTMT(schema string, filename string) (stmt []string, alias string) {
+	var stmt_schema strings.Builder
+	var stmt_table strings.Builder
+	var tableName string
+	var schemaAlias string
 
 	if schema == "" {
 		log.Print("Cannot find Schema definition, Will skip create Schema Process")
-		return ""
+		return []string{}, ""
 	} else {
-		alias := strings.Split(filename, ".")[0]
+		schemaAlias = strings.Split(filename, ".")[0]
 		suffix := strings.Split(filename, ".")[1]
-		tableName := alias + "_" + suffix
-		stmt.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS datalake.%s WITH (location = 's3a://datalake/');`, alias))
-		stmt.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS datalake.%s.%s (%s)`, alias, tableName, createSchemaColumns(schema)))
-		stmt.WriteString(fmt.Sprintf(`WITH (external_location = 's3a://datalake/%s/%s',format = '%s');`, alias, tableName, suffix))
+		tableName = schemaAlias + "_" + suffix
+		//// Presto impl
+		// stmt.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS datalake.%s WITH (location = 's3a://datalake/');`, alias))
+		stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS datalake.%s`, schemaAlias))
+		stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS datalake.%s.%s (%s)`, schemaAlias, tableName, createSchemaColumns(schema)))
+		stmt_table.WriteString(fmt.Sprintf(`WITH (external_location = 's3a://datalake/%s/%s',format = '%s')`, schemaAlias, tableName, suffix))
 	}
-	return stmt.String()
+	return []string{stmt_schema.String(), stmt_table.String()}, schemaAlias + "." + tableName
 }
 
 func (s *ObjectStorageGRPCSvc) UploadObject(r *http.Request) (uuidExchange UUIDExchange, err error) {
@@ -210,9 +245,12 @@ func (s *ObjectStorageGRPCSvc) UploadObject(r *http.Request) (uuidExchange UUIDE
 	})
 	// Create Mapping Schema
 	schema := r.FormValue("schema")
-	stmt := createSchemaSTMT(schema, header.Filename)
-	log.Print(stmt)
-	ConnSvc.ExePrestoSqlQuery(stmt)
+	stmts, alias := createSchemaSTMT(schema, header.Filename)
+	mylog.Debug.Println(stmts)
+
+	for _, stmt := range stmts {
+		ConnSvc.ExecPrestoSqlQuery(stmt)
+	}
 
 	if err != nil {
 		return UUIDExchange{}, err
@@ -221,7 +259,7 @@ func (s *ObjectStorageGRPCSvc) UploadObject(r *http.Request) (uuidExchange UUIDE
 	return UUIDExchange{
 			Filename:    header.Filename,
 			DatalakeSrc: DatalakePrefix + newFilename,
-			Alias:       fileNameSplits[0],
+			Alias:       alias,
 			DAG:         "",
 			Sql:         "",
 		},

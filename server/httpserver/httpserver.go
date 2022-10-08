@@ -3,7 +3,9 @@ package httpserver
 import (
 	dlsvc "da/datalakesvc"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 func GetHTTPServeMux() *http.ServeMux {
@@ -14,7 +16,17 @@ func GetHTTPServeMux() *http.ServeMux {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(uuid); err != nil {
-			panic(err)
+			fmt.Print(err)
+		}
+	})
+	mux.HandleFunc("/api/query/", func(w http.ResponseWriter, r *http.Request) {
+		pathSplit := strings.Split(r.URL.Path, "/")
+		queryResp, _ := dlsvc.GrpcSvc.GetDataFromUUID(pathSplit[len(pathSplit)-1])
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(queryResp); err != nil {
+			fmt.Print(err)
 		}
 	})
 

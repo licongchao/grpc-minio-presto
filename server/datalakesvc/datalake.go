@@ -1,16 +1,19 @@
 package datalakesvc
 
 import (
+	"da/mylog"
 	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	_ "github.com/prestodb/presto-go-client/presto"
+	_ "github.com/trinodb/trino-go-client/trino"
 )
 
 type UUIDMetaInfo struct {
+	Filename   string
 	Datasource string
-	Airflow    string
+	Alias      string
+	DAG        string
 	Sql        string
 }
 type DatalakeGRPCSvc struct {
@@ -27,9 +30,16 @@ type DatalakeGRPCSvc struct {
 	}
 	(3) 调用数据库查询条件并返回String
 */
-// func (s *DatalakeGRPCSvc) GetDataFromUUID(uuid string) (data string, err error) {
-
-// }
+func (s *DatalakeGRPCSvc) GetDataFromUUID(uuid string) (data string, err error) {
+	uuidMetaJson, err := ObjStorageSvc.getUUIDObjectAsJson(BucketName, uuid+".json")
+	if err != nil {
+		mylog.Error.Println(err)
+		return "", err
+	}
+	sourceStmt := "SELECT * FROM datalake." + uuidMetaJson.Alias
+	results_bytes, _ := ConnSvc.ExecPrestoSqlQuery(sourceStmt)
+	return string(results_bytes), nil
+}
 
 /*
 	high level API
