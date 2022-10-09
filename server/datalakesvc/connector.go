@@ -1,6 +1,7 @@
 package datalakesvc
 
 import (
+	"da/jsonify"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -86,6 +87,66 @@ func CloseRow(rows *sql.Rows) {
 // 	fmt.Print(result)
 // 	return nil
 // }
+
+func (s *DBConnectorSvc) ExecPrestoSqlSimpleQuery(sqlExe string) ([]byte, error) {
+	rows, err := ConnSvc.conn.Query(sqlExe)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer CloseRow(rows)
+
+	sa, _ := jsonify.Jsonify(rows)
+
+	return []byte(sa), nil
+	// if rows == nil {
+	// 	return []byte{}, nil
+	// }
+	// columns, err := rows.Columns()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("column error: %v", err)
+	// }
+
+	// ct, err := rows.ColumnTypes()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("column type error: %v", err)
+	// }
+
+	// types := make([]reflect.Type, len(ct))
+	// for i, tp := range ct {
+	// 	st := tp.ScanType()
+	// 	if st == nil {
+	// 		return nil, fmt.Errorf("scantype is null for column: %v", err)
+	// 	}
+	// 	switch st {
+	// 	case nullInt64Type:
+	// 		types[i] = jsonNullInt64Type
+	// 	case nullFloat64Type:
+	// 		types[i] = jsonNullFloat64Type
+	// 	case nullTimeType:
+	// 		types[i] = jsonNullTimeType
+	// 	default:
+	// 		types[i] = st
+	// 	}
+	// }
+	// values := make([]interface{}, len(ct))
+	// var slice []map[string]interface{}
+	// for rows.Next() {
+	// 	for i := range values {
+	// 		values[i] = reflect.New(types[i]).Interface()
+	// 	}
+	// 	err = rows.Scan(values...)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to scan values: %v", err)
+	// 	}
+	// 	data := make(map[string]interface{})
+	// 	for i, v := range values {
+	// 		data[columns[i]] = v
+	// 	}
+	// 	slice = append(slice, data)
+	// }
+
+	// return json.Marshal(slice)
+}
 
 func (s *DBConnectorSvc) ExecPrestoSqlQuery(sqlExe string) ([]byte, error) {
 	rows, err := ConnSvc.conn.Query(sqlExe)

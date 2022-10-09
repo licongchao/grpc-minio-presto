@@ -49,7 +49,7 @@ func (s *DatalakeGRPCSvc) GetDataFromUUID(uuid string) (data string, err error) 
 		return "", err
 	}
 	sourceStmt := "SELECT * FROM " + uuidMetaJson.Alias
-	results_bytes, _ := ConnSvc.ExecPrestoSqlQuery(sourceStmt)
+	results_bytes, _ := ConnSvc.ExecPrestoSqlSimpleQuery(sourceStmt)
 	return string(results_bytes), nil
 }
 
