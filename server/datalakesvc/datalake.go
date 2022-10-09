@@ -9,6 +9,18 @@ import (
 	_ "github.com/trinodb/trino-go-client/trino"
 )
 
+const (
+	CSV     string = "CSV"
+	PARQUET string = "PARQUET"
+	ORC     string = "ORC"
+	AVRO    string = "AVRO"
+)
+
+const (
+	CSVCatalog      string = "csv"
+	DataLakeCatalog string = "datalake"
+)
+
 type UUIDMetaInfo struct {
 	Filename   string
 	Datasource string

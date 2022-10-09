@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -37,7 +34,7 @@ type ServerGRPC struct {
 
 	certificate string
 	key         string
-	destDir     string
+	// destDir     string
 
 	modelpb.UnimplementedModelOprServiceServer
 }
@@ -69,86 +66,86 @@ func (s *ServerGRPC) GetFilesVer(context.Context, *empty.Empty) (*modelpb.FileIn
 	return &modelpb.FileInfoResponse{FileInfo: []*modelpb.FileInfo{fileInfo1}}, nil
 }
 
-func (s *ServerGRPC) UploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
-	firstChunk := true
+// func (s *ServerGRPC) UploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
+// 	firstChunk := true
 
-	var fp *os.File
-	var fileData *modelpb.FileUploadRequest
-	var filename string
+// 	var fp *os.File
+// 	var fileData *modelpb.FileUploadRequest
+// 	var filename string
 
-	for {
-		fileData, err = stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			err = errors.Wrapf(err, "failed unexpectedly while reading chunks from stream")
-			return
-		}
+// 	for {
+// 		fileData, err = stream.Recv()
+// 		if err != nil {
+// 			if err == io.EOF {
+// 				break
+// 			}
+// 			err = errors.Wrapf(err, "failed unexpectedly while reading chunks from stream")
+// 			return
+// 		}
 
-		if firstChunk {
-			if fileData.Filename != "" { //create file
-				fp, err = os.Create(path.Join(s.destDir, filepath.Base(fileData.Filename)))
+// 		if firstChunk {
+// 			if fileData.Filename != "" { //create file
+// 				fp, err = os.Create(path.Join(s.destDir, filepath.Base(fileData.Filename)))
 
-				if err != nil {
-					s.logger.Error().Msg("Unable to create file  :" + fileData.Filename)
-					stream.SendAndClose(&modelpb.FileUploadResponse{
-						Message: "Unable to create file :" + fileData.Filename,
-						Status:  modelpb.Status_FAILED,
-					})
-					return
-				}
-				defer fp.Close()
-			} else {
-				s.logger.Error().Msg("FileName not provided in first chunk  :" + fileData.Filename)
-				stream.SendAndClose(&modelpb.FileUploadResponse{
-					Message: "FileName not provided in first chunk:" + fileData.Filename,
-					Status:  modelpb.Status_FAILED,
-				})
-				return
-			}
-			filename = fileData.Filename
-			firstChunk = false
-		}
+// 				if err != nil {
+// 					s.logger.Error().Msg("Unable to create file  :" + fileData.Filename)
+// 					stream.SendAndClose(&modelpb.FileUploadResponse{
+// 						Message: "Unable to create file :" + fileData.Filename,
+// 						Status:  modelpb.Status_FAILED,
+// 					})
+// 					return
+// 				}
+// 				defer fp.Close()
+// 			} else {
+// 				s.logger.Error().Msg("FileName not provided in first chunk  :" + fileData.Filename)
+// 				stream.SendAndClose(&modelpb.FileUploadResponse{
+// 					Message: "FileName not provided in first chunk:" + fileData.Filename,
+// 					Status:  modelpb.Status_FAILED,
+// 				})
+// 				return
+// 			}
+// 			filename = fileData.Filename
+// 			firstChunk = false
+// 		}
 
-		err = writeToFp(fp, fileData.Content)
-		if err != nil {
-			s.logger.Error().Msg("Unable to write chunk of filename :" + fileData.Filename + " " + err.Error())
-			stream.SendAndClose(&modelpb.FileUploadResponse{
-				Message: "Unable to write chunk of filename :" + fileData.Filename,
-				Status:  modelpb.Status_FAILED,
-			})
-			return
-		}
-	}
-	err = stream.SendAndClose(&modelpb.FileUploadResponse{
-		Message: "Upload received with success",
-		Status:  modelpb.Status_SUCCESS,
-	})
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to send status code")
-		return
-	}
-	fmt.Println("Successfully received and stored the file :" + filename + " in " + s.destDir)
-	return
-}
+// 		err = writeToFp(fp, fileData.Content)
+// 		if err != nil {
+// 			s.logger.Error().Msg("Unable to write chunk of filename :" + fileData.Filename + " " + err.Error())
+// 			stream.SendAndClose(&modelpb.FileUploadResponse{
+// 				Message: "Unable to write chunk of filename :" + fileData.Filename,
+// 				Status:  modelpb.Status_FAILED,
+// 			})
+// 			return
+// 		}
+// 	}
+// 	err = stream.SendAndClose(&modelpb.FileUploadResponse{
+// 		Message: "Upload received with success",
+// 		Status:  modelpb.Status_SUCCESS,
+// 	})
+// 	if err != nil {
+// 		err = errors.Wrapf(err,
+// 			"failed to send status code")
+// 		return
+// 	}
+// 	fmt.Println("Successfully received and stored the file :" + filename + " in " + s.destDir)
+// 	return
+// }
 
-func writeToFp(fp *os.File, data []byte) error {
-	w := 0
-	n := len(data)
-	for {
-		nw, err := fp.Write(data[w:])
-		if err != nil {
-			return err
-		}
-		w += nw
-		if nw >= n {
-			return nil
-		}
-	}
+// func writeToFp(fp *os.File, data []byte) error {
+// 	w := 0
+// 	n := len(data)
+// 	for {
+// 		nw, err := fp.Write(data[w:])
+// 		if err != nil {
+// 			return err
+// 		}
+// 		w += nw
+// 		if nw >= n {
+// 			return nil
+// 		}
+// 	}
 
-}
+// }
 
 func NewServerGRPC(cfg ServerGRPCConfig) (s ServerGRPC, err error) {
 	s.logger = zerolog.New(os.Stdout).
@@ -166,12 +163,12 @@ func NewServerGRPC(cfg ServerGRPCConfig) (s ServerGRPC, err error) {
 	s.certificate = cfg.Certificate
 	s.key = cfg.Key
 
-	if _, err = os.Stat(cfg.DestDir); err != nil {
-		s.logger.Error().Msg("Directory doesnt exist")
-		return
-	}
+	// if _, err = os.Stat(cfg.DestDir); err != nil {
+	// 	s.logger.Error().Msg("Directory doesnt exist")
+	// 	return
+	// }
 
-	s.destDir = cfg.DestDir
+	// s.destDir = cfg.DestDir
 	return
 }
 

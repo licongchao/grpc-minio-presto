@@ -24,6 +24,7 @@ var (
 	S3config       *SvcConnectionConfig
 	ObjStorageSvc  ObjectStorageGRPCSvc
 	BucketName     string
+	CSVBucketName  string
 	DatalakePrefix string
 )
 
@@ -213,6 +214,7 @@ func createSchemaSTMT(schema string, filename string) (stmt []string, alias stri
 	var tableName string
 	var schemaAlias string
 
+	var destCatalog = BucketName
 	if schema == "" {
 		log.Print("Cannot find Schema definition, Will skip create Schema Process")
 		return []string{}, ""
@@ -220,13 +222,22 @@ func createSchemaSTMT(schema string, filename string) (stmt []string, alias stri
 		schemaAlias = strings.Split(filename, ".")[0]
 		suffix := strings.Split(filename, ".")[1]
 		tableName = schemaAlias + "_" + suffix
-		//// Presto impl
-		// stmt.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS datalake.%s WITH (location = 's3a://datalake/');`, alias))
-		stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS datalake.%s`, schemaAlias))
-		stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS datalake.%s.%s (%s)`, schemaAlias, tableName, createSchemaColumns(schema)))
-		stmt_table.WriteString(fmt.Sprintf(`WITH (external_location = 's3a://datalake/%s/%s',format = '%s')`, schemaAlias, tableName, suffix))
+
+		if strings.Compare(CSV, strings.ToUpper(suffix)) == 0 {
+			// Pure Trino
+			destCatalog = CSVCatalog
+			stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %s.%s`, destCatalog, schemaAlias))
+			stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.%s.%s (%s)`, CSVCatalog, schemaAlias, tableName, createSchemaColumns(schema)))
+			stmt_table.WriteString(fmt.Sprintf(`WITH (external_location = 's3a://%s/%s/%s',format = '%s')`, CSVCatalog, schemaAlias, tableName, suffix))
+		} else {
+			// Iceberg
+			destCatalog = DataLakeCatalog
+			stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %s.%s WITH (location='s3a://%s/%s');`, destCatalog, schemaAlias, destCatalog, schemaAlias))
+			stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.%s.%s (%s)`, destCatalog, schemaAlias, tableName, createSchemaColumns(schema)))
+			stmt_table.WriteString(fmt.Sprintf(`WITH (format = '%s')`, suffix))
+		}
 	}
-	return []string{stmt_schema.String(), stmt_table.String()}, schemaAlias + "." + tableName
+	return []string{stmt_schema.String(), stmt_table.String()}, destCatalog + "." + schemaAlias + "." + tableName
 }
 
 func (s *ObjectStorageGRPCSvc) UploadObject(r *http.Request) (uuidExchange UUIDExchange, err error) {
@@ -238,9 +249,14 @@ func (s *ObjectStorageGRPCSvc) UploadObject(r *http.Request) (uuidExchange UUIDE
 	fileNameSplits := strings.Split(header.Filename, ".")
 	newFilename := fmt.Sprintf("%s_%d.%s", fileNameSplits[0], time.Now().Unix(), fileNameSplits[1])
 	io.Copy(&buf, file)
+
+	var destBucket = BucketName
+	if strings.Compare(strings.ToUpper(fileNameSplits[1]), "CSV") == 0 {
+		destBucket = CSVBucketName
+	}
 	_, errPutObject := s.s3Client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(buf.Bytes()),
-		Bucket: aws.String(BucketName),
+		Bucket: aws.String(destBucket),
 		Key:    aws.String(DatalakePrefix + fileNameSplits[0] + "/" + fileNameSplits[0] + "_" + fileNameSplits[1] + "/" + newFilename),
 	})
 	// Create Mapping Schema

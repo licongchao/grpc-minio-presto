@@ -8,8 +8,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+/**
+启动时需要预创建三个Bucket
+datalake: AVRO,PARQUET,ORC
+csv: CSV, ... plaintext
+logs:
+**/
 var (
-	dsn      = "http://minio_access_key@localhost:8888?catalog=datalake"
+	dsn      = "http://minio_access_key@localhost:8080?catalog=datalake"
 	S3config = &dlsvc.SvcConnectionConfig{Endpoint: "http://127.0.0.1:9000", Region: "dai-cn", Access_key_id: "minio_access_key", Access_key_secret: "minio_secret_key"}
 )
 
@@ -26,6 +32,7 @@ var (
 func main() {
 	dlsvc.DatalakePrefix = ""
 	dlsvc.BucketName = "datalake"
+	dlsvc.CSVBucketName = "csv"
 
 	dlsvc.ConnSvc, _ = dlsvc.InitConnection(dsn)
 	dlsvc.ObjStorageSvc, _ = dlsvc.ConnectStorageSvc(*S3config)

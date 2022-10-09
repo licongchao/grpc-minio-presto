@@ -25,8 +25,8 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
 # Install git
 RUN apk update && apk add --no-cache git
 
-WORKDIR $GOPATH/src/datapreparation/grpc
-COPY . .
+COPY . /app
+WORKDIR /app
 
 # Fetch dependencies
 RUN go get -d -v
@@ -38,7 +38,7 @@ RUN go get -d -v
 # Removing debug information & 
 # disabling cross compilation
 #######################
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/main
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/main
 
 #########################
 # STEP 2 build smaller image
@@ -49,9 +49,10 @@ FROM scratch
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-COPY --from=builder /go/bin/main /go/bin/main
+COPY --from=builder /go/bin/main /app
 
 # Use an unprivileged user
 USER appuser:appuser
+EXPOSE 10000
 
-ENTRYPOINT ["/go/bin/main"]
+ENTRYPOINT ["/app","serve"]
