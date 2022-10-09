@@ -3,19 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"os"
-	"strings"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/urfave/cli"
 
+	dlsvc "da/datalakesvc"
 	"da/httpserver"
+	"da/mylog"
 	modelpb "da/pb/inventory"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
 
@@ -36,7 +38,7 @@ type ServerGRPC struct {
 	key         string
 	// destDir     string
 
-	modelpb.UnimplementedModelOprServiceServer
+	modelpb.UnimplementedDatalakeSvcServer
 }
 
 type ServerGRPCConfig struct {
@@ -55,16 +57,25 @@ func (s *ServerGRPC) Close() {
 	}
 }
 
+func (s *ServerGRPC) GetDataFromUUID(ctx context.Context, in *modelpb.UUIDExchangeRequest) (*modelpb.UUIDExchangeResponse, error) {
+	resp, error := dlsvc.GrpcSvc.GetDataFromUUID(in.UUIDStr)
+	if error != nil {
+		mylog.Info.Println(error)
+		return &modelpb.UUIDExchangeResponse{}, error
+	}
+	return &modelpb.UUIDExchangeResponse{Payload: resp}, nil
+}
+
 // string Filename = 1;
 // string Latestver = 2;
 // string Stagingver = 3;
-func (s *ServerGRPC) GetFilesVer(context.Context, *empty.Empty) (*modelpb.FileInfoResponse, error) {
-	fileInfo1 := &modelpb.FileInfo{
-		Filename:  "1.text",
-		Latestver: "123",
-	}
-	return &modelpb.FileInfoResponse{FileInfo: []*modelpb.FileInfo{fileInfo1}}, nil
-}
+// func (s *ServerGRPC) GetFilesVer(context.Context, *empty.Empty) (*modelpb.FileInfoResponse, error) {
+// 	fileInfo1 := &modelpb.FileInfo{
+// 		Filename:  "1.text",
+// 		Latestver: "123",
+// 	}
+// 	return &modelpb.FileInfoResponse{FileInfo: []*modelpb.FileInfo{fileInfo1}}, nil
+// }
 
 // func (s *ServerGRPC) UploadStandardVer(stream modelpb.ModelOprService_UploadStandardVerServer) (err error) {
 // 	firstChunk := true
@@ -174,18 +185,18 @@ func NewServerGRPC(cfg ServerGRPCConfig) (s ServerGRPC, err error) {
 
 func (s *ServerGRPC) Listen() (err error) {
 	// var (
-	// 	listener  net.Listener
+	// 	listener net.Listener
 	// 	grpcOpts  = []grpc.ServerOption{}
 	// 	grpcCreds credentials.TransportCredentials
 	// )
 
 	// listener, err = net.Listen("tcp", s.Address)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to listen on  %d",
-			s.Address)
-		return
-	}
+	// if err != nil {
+	// 	err = errors.Wrapf(err,
+	// 		"failed to listen on  %d",
+	// 		s.Address)
+	// 	return
+	// }
 
 	// if s.certificate != "" && s.key != "" {
 	// 	grpcCreds, err = credentials.NewServerTLSFromFile(
@@ -200,11 +211,28 @@ func (s *ServerGRPC) Listen() (err error) {
 	// 	grpcOpts = append(grpcOpts, grpc.Creds(grpcCreds))
 	// }
 
-	mux := httpserver.GetHTTPServeMux()
+	l, err := net.Listen("tcp", ":10000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m := cmux.New(l)
+	grpcL := m.Match(cmux.HTTP2())
+	httpL := m.Match(cmux.HTTP1Fast())
+	// trpcL := m.Match(cmux.Any())
 
 	// s.server = grpc.NewServer(grpcOpts...)
 	s.server = grpc.NewServer()
-	modelpb.RegisterModelOprServiceServer(s.server, s)
+	modelpb.RegisterDatalakeSvcServer(s.server, s)
+
+	mux := httpserver.GetHTTPServeMux()
+	httpS := &http.Server{
+		Handler: mux,
+	}
+
+	go s.server.Serve(grpcL)
+	go httpS.Serve(httpL)
+	m.Serve()
 
 	// err = s.server.Serve(listener)
 	// if err != nil {
@@ -212,15 +240,15 @@ func (s *ServerGRPC) Listen() (err error) {
 	// 	return
 	// }
 
-	http.ListenAndServe(":10000",
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-				s.server.ServeHTTP(w, r)
-			} else {
-				mux.ServeHTTP(w, r)
-			}
-		}),
-	)
+	// http.ListenAndServe(":10000",
+	// 	http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 		if r.ProtoMajor == 2 {
+	// 			s.server.ServeHTTP(w, r)
+	// 		} else {
+	// 			mux.ServeHTTP(w, r)
+	// 		}
+	// 	}),
+	// )
 	return nil
 }
 

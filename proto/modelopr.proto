@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
+// import "google/protobuf/empty.proto";
 package da;
 
 option go_package = "./;modelpb"; 
 
-service ObjectStorageSvc {
+service DatalakeSvc {
 // save Model to Staging Mode
   // rpc uploadStagingVer (stream FileUploadRequest) returns (FileUploadResponse) {}
 
@@ -13,7 +13,7 @@ service ObjectStorageSvc {
   // rpc commitStagingVer (DownloadRequest) returns (CommonResponse) {}
   
 // save Model to DB, version+1
-  rpc uploadStandardVer(stream FileUploadRequest) returns (FileUploadResponse) {}
+  // rpc uploadStandardVer(stream FileUploadRequest) returns (FileUploadResponse) {}
   
 // get Latest Model version
   // rpc downloadLatestVer (DownloadRequest) returns (stream DownloadResponse) {}
@@ -21,45 +21,55 @@ service ObjectStorageSvc {
 // // sync Latest Model automaticly (will check version inside )
 //   rpc syncLatestVers ()
   
-  rpc getFilesVer(google.protobuf.Empty) returns (FileInfoResponse) {}
+  // rpc getFilesVer(google.protobuf.Empty) returns (FileInfoResponse) {}
+
+  rpc getDataFromUUID(UUIDExchangeRequest) returns (UUIDExchangeResponse) {}
 }
 
+//-------------------Data Exchange--------------
+message UUIDExchangeRequest {
+  string UUIDStr = 1;
+}
+
+message UUIDExchangeResponse {
+  string payload = 1;
+}
 // ----------------- Upload --------------------
-enum Status {
-  PENDING = 0;
-  IN_PROGRESS = 1;
-  SUCCESS = 2;
-  FAILED = 3;
-}
+// enum Status {
+//   PENDING = 0;
+//   IN_PROGRESS = 1;
+//   SUCCESS = 2;
+//   FAILED = 3;
+// }
 
-message FileUploadRequest {
-  string Filename = 1;
-  bytes Content = 2;
-}
+// message FileUploadRequest {
+//   string Filename = 1;
+//   bytes Content = 2;
+// }
 
-message FileUploadResponse {
-  string Filename = 1;
-  string Message = 2;
-  Status Status = 3;
-}
-// ----------------- Download --------------------
-message DownloadRequest {
-  string Filename = 1;
-}
+// message FileUploadResponse {
+//   string Filename = 1;
+//   string Message = 2;
+//   Status Status = 3;
+// }
+// // ----------------- Download --------------------
+// message DownloadRequest {
+//   string Filename = 1;
+// }
 
-message DownloadResponse {
-  bytes Content = 1;
-}
-// ----------------- Common ---------------------
-message CommonResponse {
-  Status Status = 1;
-}
-// ------------------Info ------------------------
-message FileInfo {
-  string Filename = 1;
-  string Latestver = 2;
-  string Stagingver = 3;
-}
-message FileInfoResponse {
-  repeated FileInfo FileInfo = 1;
-}
+// message DownloadResponse {
+//   bytes Content = 1;
+// }
+// // ----------------- Common ---------------------
+// message CommonResponse {
+//   Status Status = 1;
+// }
+// // ------------------Info ------------------------
+// message FileInfo {
+//   string Filename = 1;
+//   string Latestver = 2;
+//   string Stagingver = 3;
+// }
+// message FileInfoResponse {
+//   repeated FileInfo FileInfo = 1;
+// }

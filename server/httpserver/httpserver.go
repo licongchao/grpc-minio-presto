@@ -25,9 +25,11 @@ func GetHTTPServeMux() *http.ServeMux {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(queryResp); err != nil {
-			fmt.Print(err)
-		}
+
+		w.Write([]byte(queryResp))
+		// if err := json.NewEncoder(w).Encode(queryResp); err != nil {
+		// 	fmt.Print(err)
+		// }
 	})
 
 	return mux

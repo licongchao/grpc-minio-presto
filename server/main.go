@@ -33,6 +33,7 @@ func main() {
 	dlsvc.DatalakePrefix = ""
 	dlsvc.BucketName = "datalake"
 	dlsvc.CSVBucketName = "csv"
+	dlsvc.TraceBucketName = "tracehistory"
 
 	dlsvc.ConnSvc, _ = dlsvc.InitConnection(dsn)
 	dlsvc.ObjStorageSvc, _ = dlsvc.ConnectStorageSvc(*S3config)

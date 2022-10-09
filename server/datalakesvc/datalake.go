@@ -43,12 +43,12 @@ type DatalakeGRPCSvc struct {
 	(3) 调用数据库查询条件并返回String
 */
 func (s *DatalakeGRPCSvc) GetDataFromUUID(uuid string) (data string, err error) {
-	uuidMetaJson, err := ObjStorageSvc.getUUIDObjectAsJson(BucketName, uuid+".json")
+	uuidMetaJson, err := ObjStorageSvc.getUUIDObjectAsJson(TraceBucketName, uuid+".json")
 	if err != nil {
 		mylog.Error.Println(err)
 		return "", err
 	}
-	sourceStmt := "SELECT * FROM datalake." + uuidMetaJson.Alias
+	sourceStmt := "SELECT * FROM " + uuidMetaJson.Alias
 	results_bytes, _ := ConnSvc.ExecPrestoSqlQuery(sourceStmt)
 	return string(results_bytes), nil
 }
@@ -78,7 +78,7 @@ func (s *DatalakeGRPCSvc) PrepareRawData(r *http.Request) (uuidStr string, err e
 
 	keyName := newUUID.String() + ".json"
 	uuidJson, _ := json.Marshal(uuidExchange)
-	ObjStorageSvc.CreateObject(uuidJson, BucketName, keyName)
+	ObjStorageSvc.CreateObject(uuidJson, TraceBucketName, keyName)
 
 	return newUUID.String(), nil
 }

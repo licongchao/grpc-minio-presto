@@ -4,10 +4,11 @@
 // 	protoc        v3.6.1
 // source: modelopr.proto
 
+// import "google/protobuf/empty.proto";
+
 package modelpb
 
 import (
-	empty "github.com/golang/protobuf/ptypes/empty"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -21,70 +22,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ----------------- Upload --------------------
-type Status int32
-
-const (
-	Status_PENDING     Status = 0
-	Status_IN_PROGRESS Status = 1
-	Status_SUCCESS     Status = 2
-	Status_FAILED      Status = 3
-)
-
-// Enum value maps for Status.
-var (
-	Status_name = map[int32]string{
-		0: "PENDING",
-		1: "IN_PROGRESS",
-		2: "SUCCESS",
-		3: "FAILED",
-	}
-	Status_value = map[string]int32{
-		"PENDING":     0,
-		"IN_PROGRESS": 1,
-		"SUCCESS":     2,
-		"FAILED":      3,
-	}
-)
-
-func (x Status) Enum() *Status {
-	p := new(Status)
-	*p = x
-	return p
-}
-
-func (x Status) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_modelopr_proto_enumTypes[0].Descriptor()
-}
-
-func (Status) Type() protoreflect.EnumType {
-	return &file_modelopr_proto_enumTypes[0]
-}
-
-func (x Status) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Status.Descriptor instead.
-func (Status) EnumDescriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{0}
-}
-
-type FileUploadRequest struct {
+//-------------------Data Exchange--------------
+type UUIDExchangeRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Filename string `protobuf:"bytes,1,opt,name=Filename,proto3" json:"Filename,omitempty"`
-	Content  []byte `protobuf:"bytes,2,opt,name=Content,proto3" json:"Content,omitempty"`
+	UUIDStr string `protobuf:"bytes,1,opt,name=UUIDStr,proto3" json:"UUIDStr,omitempty"`
 }
 
-func (x *FileUploadRequest) Reset() {
-	*x = FileUploadRequest{}
+func (x *UUIDExchangeRequest) Reset() {
+	*x = UUIDExchangeRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_modelopr_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -92,13 +40,13 @@ func (x *FileUploadRequest) Reset() {
 	}
 }
 
-func (x *FileUploadRequest) String() string {
+func (x *UUIDExchangeRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FileUploadRequest) ProtoMessage() {}
+func (*UUIDExchangeRequest) ProtoMessage() {}
 
-func (x *FileUploadRequest) ProtoReflect() protoreflect.Message {
+func (x *UUIDExchangeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_modelopr_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -110,37 +58,28 @@ func (x *FileUploadRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FileUploadRequest.ProtoReflect.Descriptor instead.
-func (*FileUploadRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UUIDExchangeRequest.ProtoReflect.Descriptor instead.
+func (*UUIDExchangeRequest) Descriptor() ([]byte, []int) {
 	return file_modelopr_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *FileUploadRequest) GetFilename() string {
+func (x *UUIDExchangeRequest) GetUUIDStr() string {
 	if x != nil {
-		return x.Filename
+		return x.UUIDStr
 	}
 	return ""
 }
 
-func (x *FileUploadRequest) GetContent() []byte {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
-type FileUploadResponse struct {
+type UUIDExchangeResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Filename string `protobuf:"bytes,1,opt,name=Filename,proto3" json:"Filename,omitempty"`
-	Message  string `protobuf:"bytes,2,opt,name=Message,proto3" json:"Message,omitempty"`
-	Status   Status `protobuf:"varint,3,opt,name=Status,proto3,enum=da.Status" json:"Status,omitempty"`
+	Payload string `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
 }
 
-func (x *FileUploadResponse) Reset() {
-	*x = FileUploadResponse{}
+func (x *UUIDExchangeResponse) Reset() {
+	*x = UUIDExchangeResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_modelopr_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -148,13 +87,13 @@ func (x *FileUploadResponse) Reset() {
 	}
 }
 
-func (x *FileUploadResponse) String() string {
+func (x *UUIDExchangeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FileUploadResponse) ProtoMessage() {}
+func (*UUIDExchangeResponse) ProtoMessage() {}
 
-func (x *FileUploadResponse) ProtoReflect() protoreflect.Message {
+func (x *UUIDExchangeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_modelopr_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -166,339 +105,36 @@ func (x *FileUploadResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FileUploadResponse.ProtoReflect.Descriptor instead.
-func (*FileUploadResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UUIDExchangeResponse.ProtoReflect.Descriptor instead.
+func (*UUIDExchangeResponse) Descriptor() ([]byte, []int) {
 	return file_modelopr_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *FileUploadResponse) GetFilename() string {
+func (x *UUIDExchangeResponse) GetPayload() string {
 	if x != nil {
-		return x.Filename
+		return x.Payload
 	}
 	return ""
-}
-
-func (x *FileUploadResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *FileUploadResponse) GetStatus() Status {
-	if x != nil {
-		return x.Status
-	}
-	return Status_PENDING
-}
-
-// ----------------- Download --------------------
-type DownloadRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Filename string `protobuf:"bytes,1,opt,name=Filename,proto3" json:"Filename,omitempty"`
-}
-
-func (x *DownloadRequest) Reset() {
-	*x = DownloadRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_modelopr_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DownloadRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DownloadRequest) ProtoMessage() {}
-
-func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_modelopr_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DownloadRequest.ProtoReflect.Descriptor instead.
-func (*DownloadRequest) Descriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *DownloadRequest) GetFilename() string {
-	if x != nil {
-		return x.Filename
-	}
-	return ""
-}
-
-type DownloadResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Content []byte `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
-}
-
-func (x *DownloadResponse) Reset() {
-	*x = DownloadResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_modelopr_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DownloadResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DownloadResponse) ProtoMessage() {}
-
-func (x *DownloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_modelopr_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DownloadResponse.ProtoReflect.Descriptor instead.
-func (*DownloadResponse) Descriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *DownloadResponse) GetContent() []byte {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
-// ----------------- Common ---------------------
-type CommonResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Status Status `protobuf:"varint,1,opt,name=Status,proto3,enum=da.Status" json:"Status,omitempty"`
-}
-
-func (x *CommonResponse) Reset() {
-	*x = CommonResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_modelopr_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CommonResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommonResponse) ProtoMessage() {}
-
-func (x *CommonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_modelopr_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommonResponse.ProtoReflect.Descriptor instead.
-func (*CommonResponse) Descriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CommonResponse) GetStatus() Status {
-	if x != nil {
-		return x.Status
-	}
-	return Status_PENDING
-}
-
-// ------------------Info ------------------------
-type FileInfo struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Filename   string `protobuf:"bytes,1,opt,name=Filename,proto3" json:"Filename,omitempty"`
-	Latestver  string `protobuf:"bytes,2,opt,name=Latestver,proto3" json:"Latestver,omitempty"`
-	Stagingver string `protobuf:"bytes,3,opt,name=Stagingver,proto3" json:"Stagingver,omitempty"`
-}
-
-func (x *FileInfo) Reset() {
-	*x = FileInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_modelopr_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *FileInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileInfo) ProtoMessage() {}
-
-func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_modelopr_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileInfo.ProtoReflect.Descriptor instead.
-func (*FileInfo) Descriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *FileInfo) GetFilename() string {
-	if x != nil {
-		return x.Filename
-	}
-	return ""
-}
-
-func (x *FileInfo) GetLatestver() string {
-	if x != nil {
-		return x.Latestver
-	}
-	return ""
-}
-
-func (x *FileInfo) GetStagingver() string {
-	if x != nil {
-		return x.Stagingver
-	}
-	return ""
-}
-
-type FileInfoResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	FileInfo []*FileInfo `protobuf:"bytes,1,rep,name=FileInfo,proto3" json:"FileInfo,omitempty"`
-}
-
-func (x *FileInfoResponse) Reset() {
-	*x = FileInfoResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_modelopr_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *FileInfoResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileInfoResponse) ProtoMessage() {}
-
-func (x *FileInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_modelopr_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileInfoResponse.ProtoReflect.Descriptor instead.
-func (*FileInfoResponse) Descriptor() ([]byte, []int) {
-	return file_modelopr_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *FileInfoResponse) GetFileInfo() []*FileInfo {
-	if x != nil {
-		return x.FileInfo
-	}
-	return nil
 }
 
 var File_modelopr_proto protoreflect.FileDescriptor
 
 var file_modelopr_proto_rawDesc = []byte{
 	0x0a, 0x0e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x6f, 0x70, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x12, 0x02, 0x64, 0x61, 0x1a, 0x1b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0x49, 0x0a, 0x11, 0x46, 0x69, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61,
-	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61,
-	0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0c, 0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0x6e, 0x0a, 0x12,
-	0x46, 0x69, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18,
-	0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x22, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0a, 0x2e, 0x64, 0x61, 0x2e, 0x53, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x2d, 0x0a, 0x0f,
-	0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1a, 0x0a, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x2c, 0x0a, 0x10, 0x44,
-	0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c,
-	0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0x34, 0x0a, 0x0e, 0x43, 0x6f, 0x6d,
-	0x6d, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x22, 0x0a, 0x06, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0a, 0x2e, 0x64, 0x61,
-	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22,
-	0x64, 0x0a, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1a, 0x0a, 0x08, 0x46,
-	0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x46,
-	0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x4c, 0x61, 0x74, 0x65, 0x73,
-	0x74, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x4c, 0x61, 0x74, 0x65,
-	0x73, 0x74, 0x76, 0x65, 0x72, 0x12, 0x1e, 0x0a, 0x0a, 0x53, 0x74, 0x61, 0x67, 0x69, 0x6e, 0x67,
-	0x76, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x53, 0x74, 0x61, 0x67, 0x69,
-	0x6e, 0x67, 0x76, 0x65, 0x72, 0x22, 0x3c, 0x0a, 0x10, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66,
-	0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x28, 0x0a, 0x08, 0x46, 0x69, 0x6c,
-	0x65, 0x49, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x64, 0x61,
-	0x2e, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x08, 0x46, 0x69, 0x6c, 0x65, 0x49,
-	0x6e, 0x66, 0x6f, 0x2a, 0x3f, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0b, 0x0a,
-	0x07, 0x50, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x00, 0x12, 0x0f, 0x0a, 0x0b, 0x49, 0x4e,
-	0x5f, 0x50, 0x52, 0x4f, 0x47, 0x52, 0x45, 0x53, 0x53, 0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x53,
-	0x55, 0x43, 0x43, 0x45, 0x53, 0x53, 0x10, 0x02, 0x12, 0x0a, 0x0a, 0x06, 0x46, 0x41, 0x49, 0x4c,
-	0x45, 0x44, 0x10, 0x03, 0x32, 0x98, 0x01, 0x0a, 0x0f, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x4f, 0x70,
-	0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x46, 0x0a, 0x11, 0x75, 0x70, 0x6c, 0x6f,
-	0x61, 0x64, 0x53, 0x74, 0x61, 0x6e, 0x64, 0x61, 0x72, 0x64, 0x56, 0x65, 0x72, 0x12, 0x15, 0x2e,
-	0x64, 0x61, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x64, 0x61, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x55, 0x70,
-	0x6c, 0x6f, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x28, 0x01,
-	0x12, 0x3d, 0x0a, 0x0b, 0x67, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x73, 0x56, 0x65, 0x72, 0x12,
-	0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x1a, 0x14, 0x2e, 0x64, 0x61, 0x2e, 0x46, 0x69, 0x6c,
-	0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42,
-	0x0c, 0x5a, 0x0a, 0x2e, 0x2f, 0x3b, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x70, 0x62, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x02, 0x64, 0x61, 0x22, 0x2f, 0x0a, 0x13, 0x55, 0x55, 0x49, 0x44, 0x45, 0x78, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x55,
+	0x55, 0x49, 0x44, 0x53, 0x74, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x55, 0x55,
+	0x49, 0x44, 0x53, 0x74, 0x72, 0x22, 0x30, 0x0a, 0x14, 0x55, 0x55, 0x49, 0x44, 0x45, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a,
+	0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x32, 0x55, 0x0a, 0x0b, 0x44, 0x61, 0x74, 0x61, 0x6c,
+	0x61, 0x6b, 0x65, 0x53, 0x76, 0x63, 0x12, 0x46, 0x0a, 0x0f, 0x67, 0x65, 0x74, 0x44, 0x61, 0x74,
+	0x61, 0x46, 0x72, 0x6f, 0x6d, 0x55, 0x55, 0x49, 0x44, 0x12, 0x17, 0x2e, 0x64, 0x61, 0x2e, 0x55,
+	0x55, 0x49, 0x44, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x18, 0x2e, 0x64, 0x61, 0x2e, 0x55, 0x55, 0x49, 0x44, 0x45, 0x78, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x0c,
+	0x5a, 0x0a, 0x2e, 0x2f, 0x3b, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -513,32 +149,19 @@ func file_modelopr_proto_rawDescGZIP() []byte {
 	return file_modelopr_proto_rawDescData
 }
 
-var file_modelopr_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_modelopr_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_modelopr_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_modelopr_proto_goTypes = []interface{}{
-	(Status)(0),                // 0: da.Status
-	(*FileUploadRequest)(nil),  // 1: da.FileUploadRequest
-	(*FileUploadResponse)(nil), // 2: da.FileUploadResponse
-	(*DownloadRequest)(nil),    // 3: da.DownloadRequest
-	(*DownloadResponse)(nil),   // 4: da.DownloadResponse
-	(*CommonResponse)(nil),     // 5: da.CommonResponse
-	(*FileInfo)(nil),           // 6: da.FileInfo
-	(*FileInfoResponse)(nil),   // 7: da.FileInfoResponse
-	(*empty.Empty)(nil),        // 8: google.protobuf.Empty
+	(*UUIDExchangeRequest)(nil),  // 0: da.UUIDExchangeRequest
+	(*UUIDExchangeResponse)(nil), // 1: da.UUIDExchangeResponse
 }
 var file_modelopr_proto_depIdxs = []int32{
-	0, // 0: da.FileUploadResponse.Status:type_name -> da.Status
-	0, // 1: da.CommonResponse.Status:type_name -> da.Status
-	6, // 2: da.FileInfoResponse.FileInfo:type_name -> da.FileInfo
-	1, // 3: da.ModelOprService.uploadStandardVer:input_type -> da.FileUploadRequest
-	8, // 4: da.ModelOprService.getFilesVer:input_type -> google.protobuf.Empty
-	2, // 5: da.ModelOprService.uploadStandardVer:output_type -> da.FileUploadResponse
-	7, // 6: da.ModelOprService.getFilesVer:output_type -> da.FileInfoResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: da.DatalakeSvc.getDataFromUUID:input_type -> da.UUIDExchangeRequest
+	1, // 1: da.DatalakeSvc.getDataFromUUID:output_type -> da.UUIDExchangeResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_modelopr_proto_init() }
@@ -548,7 +171,7 @@ func file_modelopr_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_modelopr_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileUploadRequest); i {
+			switch v := v.(*UUIDExchangeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -560,67 +183,7 @@ func file_modelopr_proto_init() {
 			}
 		}
 		file_modelopr_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileUploadResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_modelopr_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_modelopr_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DownloadResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_modelopr_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CommonResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_modelopr_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileInfo); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_modelopr_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileInfoResponse); i {
+			switch v := v.(*UUIDExchangeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -637,14 +200,13 @@ func file_modelopr_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_modelopr_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      0,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_modelopr_proto_goTypes,
 		DependencyIndexes: file_modelopr_proto_depIdxs,
-		EnumInfos:         file_modelopr_proto_enumTypes,
 		MessageInfos:      file_modelopr_proto_msgTypes,
 	}.Build()
 	File_modelopr_proto = out.File

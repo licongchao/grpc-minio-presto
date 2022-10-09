@@ -21,11 +21,12 @@ import (
 )
 
 var (
-	S3config       *SvcConnectionConfig
-	ObjStorageSvc  ObjectStorageGRPCSvc
-	BucketName     string
-	CSVBucketName  string
-	DatalakePrefix string
+	S3config        *SvcConnectionConfig
+	ObjStorageSvc   ObjectStorageGRPCSvc
+	BucketName      string
+	CSVBucketName   string
+	TraceBucketName string
+	DatalakePrefix  string
 )
 
 type SvcConnectionConfig struct {

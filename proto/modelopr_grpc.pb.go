@@ -8,7 +8,6 @@ package modelpb
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -19,161 +18,88 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// ModelOprServiceClient is the client API for ModelOprService service.
+// DatalakeSvcClient is the client API for DatalakeSvc service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ModelOprServiceClient interface {
-	// save Model to DB, version+1
-	UploadStandardVer(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_UploadStandardVerClient, error)
-	GetFilesVer(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoResponse, error)
+type DatalakeSvcClient interface {
+	GetDataFromUUID(ctx context.Context, in *UUIDExchangeRequest, opts ...grpc.CallOption) (*UUIDExchangeResponse, error)
 }
 
-type modelOprServiceClient struct {
+type datalakeSvcClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewModelOprServiceClient(cc grpc.ClientConnInterface) ModelOprServiceClient {
-	return &modelOprServiceClient{cc}
+func NewDatalakeSvcClient(cc grpc.ClientConnInterface) DatalakeSvcClient {
+	return &datalakeSvcClient{cc}
 }
 
-func (c *modelOprServiceClient) UploadStandardVer(ctx context.Context, opts ...grpc.CallOption) (ModelOprService_UploadStandardVerClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ModelOprService_ServiceDesc.Streams[0], "/da.ModelOprService/uploadStandardVer", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &modelOprServiceUploadStandardVerClient{stream}
-	return x, nil
-}
-
-type ModelOprService_UploadStandardVerClient interface {
-	Send(*FileUploadRequest) error
-	CloseAndRecv() (*FileUploadResponse, error)
-	grpc.ClientStream
-}
-
-type modelOprServiceUploadStandardVerClient struct {
-	grpc.ClientStream
-}
-
-func (x *modelOprServiceUploadStandardVerClient) Send(m *FileUploadRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *modelOprServiceUploadStandardVerClient) CloseAndRecv() (*FileUploadResponse, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(FileUploadResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *modelOprServiceClient) GetFilesVer(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoResponse, error) {
-	out := new(FileInfoResponse)
-	err := c.cc.Invoke(ctx, "/da.ModelOprService/getFilesVer", in, out, opts...)
+func (c *datalakeSvcClient) GetDataFromUUID(ctx context.Context, in *UUIDExchangeRequest, opts ...grpc.CallOption) (*UUIDExchangeResponse, error) {
+	out := new(UUIDExchangeResponse)
+	err := c.cc.Invoke(ctx, "/da.DatalakeSvc/getDataFromUUID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ModelOprServiceServer is the server API for ModelOprService service.
-// All implementations must embed UnimplementedModelOprServiceServer
+// DatalakeSvcServer is the server API for DatalakeSvc service.
+// All implementations must embed UnimplementedDatalakeSvcServer
 // for forward compatibility
-type ModelOprServiceServer interface {
-	// save Model to DB, version+1
-	UploadStandardVer(ModelOprService_UploadStandardVerServer) error
-	GetFilesVer(context.Context, *empty.Empty) (*FileInfoResponse, error)
-	mustEmbedUnimplementedModelOprServiceServer()
+type DatalakeSvcServer interface {
+	GetDataFromUUID(context.Context, *UUIDExchangeRequest) (*UUIDExchangeResponse, error)
+	mustEmbedUnimplementedDatalakeSvcServer()
 }
 
-// UnimplementedModelOprServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedModelOprServiceServer struct {
+// UnimplementedDatalakeSvcServer must be embedded to have forward compatible implementations.
+type UnimplementedDatalakeSvcServer struct {
 }
 
-func (UnimplementedModelOprServiceServer) UploadStandardVer(ModelOprService_UploadStandardVerServer) error {
-	return status.Errorf(codes.Unimplemented, "method UploadStandardVer not implemented")
+func (UnimplementedDatalakeSvcServer) GetDataFromUUID(context.Context, *UUIDExchangeRequest) (*UUIDExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataFromUUID not implemented")
 }
-func (UnimplementedModelOprServiceServer) GetFilesVer(context.Context, *empty.Empty) (*FileInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFilesVer not implemented")
-}
-func (UnimplementedModelOprServiceServer) mustEmbedUnimplementedModelOprServiceServer() {}
+func (UnimplementedDatalakeSvcServer) mustEmbedUnimplementedDatalakeSvcServer() {}
 
-// UnsafeModelOprServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ModelOprServiceServer will
+// UnsafeDatalakeSvcServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DatalakeSvcServer will
 // result in compilation errors.
-type UnsafeModelOprServiceServer interface {
-	mustEmbedUnimplementedModelOprServiceServer()
+type UnsafeDatalakeSvcServer interface {
+	mustEmbedUnimplementedDatalakeSvcServer()
 }
 
-func RegisterModelOprServiceServer(s grpc.ServiceRegistrar, srv ModelOprServiceServer) {
-	s.RegisterService(&ModelOprService_ServiceDesc, srv)
+func RegisterDatalakeSvcServer(s grpc.ServiceRegistrar, srv DatalakeSvcServer) {
+	s.RegisterService(&DatalakeSvc_ServiceDesc, srv)
 }
 
-func _ModelOprService_UploadStandardVer_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ModelOprServiceServer).UploadStandardVer(&modelOprServiceUploadStandardVerServer{stream})
-}
-
-type ModelOprService_UploadStandardVerServer interface {
-	SendAndClose(*FileUploadResponse) error
-	Recv() (*FileUploadRequest, error)
-	grpc.ServerStream
-}
-
-type modelOprServiceUploadStandardVerServer struct {
-	grpc.ServerStream
-}
-
-func (x *modelOprServiceUploadStandardVerServer) SendAndClose(m *FileUploadResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *modelOprServiceUploadStandardVerServer) Recv() (*FileUploadRequest, error) {
-	m := new(FileUploadRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _ModelOprService_GetFilesVer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
+func _DatalakeSvc_GetDataFromUUID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UUIDExchangeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ModelOprServiceServer).GetFilesVer(ctx, in)
+		return srv.(DatalakeSvcServer).GetDataFromUUID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/da.ModelOprService/getFilesVer",
+		FullMethod: "/da.DatalakeSvc/getDataFromUUID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelOprServiceServer).GetFilesVer(ctx, req.(*empty.Empty))
+		return srv.(DatalakeSvcServer).GetDataFromUUID(ctx, req.(*UUIDExchangeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// ModelOprService_ServiceDesc is the grpc.ServiceDesc for ModelOprService service.
+// DatalakeSvc_ServiceDesc is the grpc.ServiceDesc for DatalakeSvc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ModelOprService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "da.ModelOprService",
-	HandlerType: (*ModelOprServiceServer)(nil),
+var DatalakeSvc_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "da.DatalakeSvc",
+	HandlerType: (*DatalakeSvcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "getFilesVer",
-			Handler:    _ModelOprService_GetFilesVer_Handler,
+			MethodName: "getDataFromUUID",
+			Handler:    _DatalakeSvc_GetDataFromUUID_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "uploadStandardVer",
-			Handler:       _ModelOprService_UploadStandardVer_Handler,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "modelopr.proto",
 }
