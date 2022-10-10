@@ -230,13 +230,14 @@ func createSchemaSTMT(schema string, filename string) (stmt []string, alias stri
 			stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %s.%s`, destCatalog, schemaAlias))
 			stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.%s.%s (%s)`, CSVCatalog, schemaAlias, tableName, createSchemaColumns(schema)))
 			stmt_table.WriteString(fmt.Sprintf(`WITH (external_location = 's3a://%s/%s/%s',format = '%s')`, CSVCatalog, schemaAlias, tableName, suffix))
-		} else {
-			// Iceberg
-			destCatalog = DataLakeCatalog
-			stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %s.%s WITH (location='s3a://%s/%s');`, destCatalog, schemaAlias, destCatalog, schemaAlias))
-			stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.%s.%s (%s)`, destCatalog, schemaAlias, tableName, createSchemaColumns(schema)))
-			stmt_table.WriteString(fmt.Sprintf(`WITH (format = '%s')`, suffix))
 		}
+		// else {
+		// 	// Iceberg (Iceberg是数据库实现，所以如果需要外挂数据文件，需要对内部的meta文件特别熟悉，否则就采用 insert into xxx select * from xxx方式)
+		// 	destCatalog = DataLakeCatalog
+		// 	stmt_schema.WriteString(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %s.%s WITH (location='s3a://%s/%s');`, destCatalog, schemaAlias, destCatalog, schemaAlias))
+		// 	stmt_table.WriteString(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.%s.%s (%s)`, destCatalog, schemaAlias, tableName, createSchemaColumns(schema)))
+		// 	stmt_table.WriteString(fmt.Sprintf(`WITH (format = '%s')`, suffix))
+		// }
 	}
 	return []string{stmt_schema.String(), stmt_table.String()}, destCatalog + "." + schemaAlias + "." + tableName
 }

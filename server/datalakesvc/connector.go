@@ -1,7 +1,7 @@
 package datalakesvc
 
 import (
-	"da/jsonify"
+	"da/utils"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -95,7 +95,7 @@ func (s *DBConnectorSvc) ExecPrestoSqlSimpleQuery(sqlExe string) ([]byte, error)
 	}
 	defer CloseRow(rows)
 
-	sa, _ := jsonify.Jsonify(rows)
+	sa, _ := utils.Jsonify(rows)
 
 	return []byte(sa), nil
 	// if rows == nil {
